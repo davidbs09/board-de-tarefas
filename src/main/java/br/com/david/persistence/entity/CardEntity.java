@@ -9,5 +9,6 @@ public class CardEntity {
     private String title;
     private String description;
     private BoardColumnEntity boardColumn = new BoardColumnEntity();
+    private UserEntity assignedUser; // Responsável pelo card
 
 }
