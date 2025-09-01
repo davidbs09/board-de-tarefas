@@ -19,26 +19,31 @@ import static br.com.david.persistence.entity.BoardColumnKindEnum.PENDING;
 
 public class MainMenu {
 
-    private final Scanner scanner = new Scanner(System.in).useDelimiter("\n");
+    private final Scanner scanner = new Scanner(System.in);
 
     public void execute() throws SQLException {
         System.out.println("Bem vindo ao gerenciador de boards, escolha a opção desejada");
-        var option = -1;
-        while (true){
+        while (true) {
             System.out.println("1 - Criar um novo board");
             System.out.println("2 - Buscar boards por nome");
             System.out.println("3 - Selecionar um board existente");
             System.out.println("4 - Excluir um board");
             System.out.println("5 - Sair");
 
-            option = scanner.nextInt();
-            switch (option){
+            String input = scanner.nextLine();
+            int option;
+            try {
+                option = Integer.parseInt(input.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Opção inválida, informe uma opção do menu");
+                continue;
+            }
+            switch (option) {
                 case 1 -> createBoard();
                 case 2 -> searchBoardsByName();
                 case 3 -> selectBoard();
                 case 4 -> deleteBoard();
                 case 5 -> System.exit(0);
-
                 default -> System.out.println("Opção inválida, informe uma opção do menu");
             }
         }
@@ -47,32 +52,42 @@ public class MainMenu {
     private void createBoard() throws SQLException {
         var entity = new BoardEntity();
         System.out.println("Informe o nome do seu board");
-        entity.setName(scanner.next());
+        entity.setName(scanner.nextLine().trim());
 
-        System.out.println("Seu board terá colunas além das 3 padrões? Se sim informe quantas, senão digite '0'");
-        var additionalColumns = scanner.nextInt();
+        int additionalColumns = 0;
+        while (true) {
+            System.out.println("Seu board terá colunas além das 3 padrões? Se sim informe quantas, senão digite '0'");
+            String colInput = scanner.nextLine();
+            try {
+                additionalColumns = Integer.parseInt(colInput.trim());
+                if (additionalColumns < 0) throw new NumberFormatException();
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, informe um número válido maior ou igual a zero.");
+            }
+        }
 
         List<BoardColumnEntity> columns = new ArrayList<>();
 
         System.out.println("Informe o nome da coluna inicial do board");
-        var initialColumnName = scanner.next();
+        var initialColumnName = scanner.nextLine().trim();
         var initialColumn = createColumn(initialColumnName, INITIAL, 0);
         columns.add(initialColumn);
 
         for (int i = 0; i < additionalColumns; i++) {
             System.out.println("Informe o nome da coluna de tarefa pendente do board");
-            var pendingColumnName = scanner.next();
+            var pendingColumnName = scanner.nextLine().trim();
             var pendingColumn = createColumn(pendingColumnName, PENDING, i + 1);
             columns.add(pendingColumn);
         }
 
         System.out.println("Informe o nome da coluna final");
-        var finalColumnName = scanner.next();
+        var finalColumnName = scanner.nextLine().trim();
         var finalColumn = createColumn(finalColumnName, FINAL, additionalColumns + 1);
         columns.add(finalColumn);
 
-        System.out.println("Informe o nome da coluna de cancelamento do baord");
-        var cancelColumnName = scanner.next();
+        System.out.println("Informe o nome da coluna de cancelamento do board");
+        var cancelColumnName = scanner.nextLine().trim();
         var cancelColumn = createColumn(cancelColumnName, CANCEL, additionalColumns + 2);
         columns.add(cancelColumn);
 
@@ -86,20 +101,37 @@ public class MainMenu {
 
     private void selectBoard() throws SQLException {
         System.out.println("Informe o id do board que deseja selecionar");
-        var id = scanner.nextLong();
+        Long id = null;
+        while (id == null) {
+            String input = scanner.nextLine();
+            try {
+                id = Long.parseLong(input.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, informe um id válido.");
+            }
+        }
+        final Long finalId = id;
         try(var connection = getConnection()){
             var queryService = new BoardQueryService(connection);
-            var optional = queryService.findById(id);
+            var optional = queryService.findById(finalId);
             optional.ifPresentOrElse(
                     b -> new BoardMenu(b).execute(),
-                    () -> System.out.printf("Não foi encontrado um board com id %s\n", id)
+                    () -> System.out.printf("Não foi encontrado um board com id %s\n", finalId)
             );
         }
     }
 
     private void deleteBoard() throws SQLException {
         System.out.println("Informe o id do board que será excluido");
-        var id = scanner.nextLong();
+        Long id = null;
+        while (id == null) {
+            String input = scanner.nextLine();
+            try {
+                id = Long.parseLong(input.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, informe um id válido.");
+            }
+        }
         try(var connection = getConnection()){
             var service = new BoardService(connection);
             if (service.delete(id)){
@@ -112,7 +144,7 @@ public class MainMenu {
 
     private void searchBoardsByName() throws SQLException {
         System.out.println("Informe o nome (ou parte do nome) do board para buscar:");
-        var name = scanner.next();
+        var name = scanner.nextLine().trim();
         try (var connection = getConnection()) {
             var queryService = new BoardQueryService(connection);
             var boards = queryService.findByName(name);

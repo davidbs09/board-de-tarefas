@@ -17,12 +17,17 @@ public class CardDAO {
     private Connection connection;
 
     public CardEntity insert(final CardEntity entity) throws SQLException {
-        var sql = "INSERT INTO CARDS (title, description, board_column_id) values (?, ?, ?);";
+        var sql = "INSERT INTO CARDS (title, description, board_column_id, assigned_user_id) values (?, ?, ?, ?);";
         try(var statement = connection.prepareStatement(sql)){
             var i = 1;
             statement.setString(i ++, entity.getTitle());
             statement.setString(i ++, entity.getDescription());
-            statement.setLong(i, entity.getBoardColumn().getId());
+            statement.setLong(i ++, entity.getBoardColumn().getId());
+            if (entity.getAssignedUser() != null && entity.getAssignedUser().getId() != null) {
+                statement.setLong(i, entity.getAssignedUser().getId());
+            } else {
+                statement.setNull(i, java.sql.Types.BIGINT);
+            }
             statement.executeUpdate();
             if (statement instanceof StatementImpl impl){
                 entity.setId(impl.getLastInsertID());
@@ -37,6 +42,19 @@ public class CardDAO {
             var i = 1;
             statement.setLong(i ++, columnId);
             statement.setLong(i, cardId);
+            statement.executeUpdate();
+        }
+    }
+
+    public void updateAssignedUser(final Long cardId, final Long userId) throws SQLException {
+        var sql = "UPDATE CARDS SET assigned_user_id = ? WHERE id = ?;";
+        try(var statement = connection.prepareStatement(sql)){
+            if (userId != null) {
+                statement.setLong(1, userId);
+            } else {
+                statement.setNull(1, java.sql.Types.BIGINT);
+            }
+            statement.setLong(2, cardId);
             statement.executeUpdate();
         }
     }
