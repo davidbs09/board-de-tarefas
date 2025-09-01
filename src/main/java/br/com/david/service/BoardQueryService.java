@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -38,6 +39,11 @@ public class BoardQueryService {
             return Optional.of(dto);
         }
         return Optional.empty();
+    }
+
+    public List<BoardEntity> findByName(String name) throws SQLException {
+        var dao = new BoardDAO(connection);
+        return dao.findByName(name);
     }
 
 }

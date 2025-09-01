@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -56,6 +58,23 @@ public class BoardDAO {
             statement.executeQuery();
             return statement.getResultSet().next();
         }
+    }
+
+    public List<BoardEntity> findByName(String name) throws SQLException {
+        var sql = "SELECT id, name FROM BOARDS WHERE name LIKE ?";
+        List<BoardEntity> boards = new ArrayList<>();
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setString(1, "%" + name + "%");
+            statement.executeQuery();
+            var resultSet = statement.getResultSet();
+            while (resultSet.next()) {
+                var entity = new BoardEntity();
+                entity.setId(resultSet.getLong("id"));
+                entity.setName(resultSet.getString("name"));
+                boards.add(entity);
+            }
+        }
+        return boards;
     }
 
 }
