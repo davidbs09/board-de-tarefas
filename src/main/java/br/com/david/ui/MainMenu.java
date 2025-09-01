@@ -26,15 +26,19 @@ public class MainMenu {
         var option = -1;
         while (true){
             System.out.println("1 - Criar um novo board");
-            System.out.println("2 - Selecionar um board existente");
-            System.out.println("3 - Excluir um board");
-            System.out.println("4 - Sair");
+            System.out.println("2 - Buscar boards por nome");
+            System.out.println("3 - Selecionar um board existente");
+            System.out.println("4 - Excluir um board");
+            System.out.println("5 - Sair");
+
             option = scanner.nextInt();
             switch (option){
                 case 1 -> createBoard();
-                case 2 -> selectBoard();
-                case 3 -> deleteBoard();
-                case 4 -> System.exit(0);
+                case 2 -> searchBoardsByName();
+                case 3 -> selectBoard();
+                case 4 -> deleteBoard();
+                case 5 -> System.exit(0);
+
                 default -> System.out.println("Opção inválida, informe uma opção do menu");
             }
         }
@@ -102,6 +106,23 @@ public class MainMenu {
                 System.out.printf("O board %s foi excluido\n", id);
             } else {
                 System.out.printf("Não foi encontrado um board com id %s\n", id);
+            }
+        }
+    }
+
+    private void searchBoardsByName() throws SQLException {
+        System.out.println("Informe o nome (ou parte do nome) do board para buscar:");
+        var name = scanner.next();
+        try (var connection = getConnection()) {
+            var queryService = new BoardQueryService(connection);
+            var boards = queryService.findByName(name);
+            if (boards.isEmpty()) {
+                System.out.println("Nenhum board encontrado.");
+            } else {
+                System.out.println("Boards encontrados:");
+                for (var board : boards) {
+                    System.out.printf("ID: %d | Nome: %s%n", board.getId(), board.getName());
+                }
             }
         }
     }
